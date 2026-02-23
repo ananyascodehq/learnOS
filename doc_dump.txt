@@ -1,0 +1,516 @@
+LearnOS
+Personal Study Intelligence Platform
+Product Requirements Document  |  v1.0
+Document Version
+1.0 — Initial Release
+Status
+Draft — Ready for Development
+Author
+Confidential
+Target Platform
+Web Application (Browser-based)
+Primary Users
+Students — Individual + Group Accounts
+Tech Stack
+React, Tailwind CSS, Node.js/Express, Supabase, Anthropic Claude API
+1. Executive Summary
+LearnOS is a cloud-based personal study intelligence platform that replaces the manual Google Sheets workflow currently used by students to log and track their learning sessions. The platform provides a frictionless real-time session logger, a rich analytics dashboard, a collaborative friend activity feed, and an AI-powered weekly insights engine — all accessible from any browser after a secure Google OAuth login.
+The core problem it solves: students are logging learning data into spreadsheets that cannot analyze themselves, surface patterns, remind about pending actions, or motivate through social accountability. LearnOS transforms raw session data into actionable intelligence.
+2. Problem Statement
+2.1 Current Workflow Pain Points
+Logging sessions into a Google Sheet is slow and tedious — each entry requires navigating multiple columns, selecting dropdowns, and manually noting times.
+The sheet is write-only in practice — there is no way to easily review progress by topic, identify weak areas, or see trends over time.
+The "Next Action" column gets buried — pending follow-up tasks are not surfaced anywhere and are routinely forgotten.
+No social accountability — each student tracks in isolation with no visibility into peers' progress.
+No intelligence layer — raw logged data produces no automatic insights, summaries, or recommendations.
+2.2 Target Users
+Primary User
+Engineering / CS students actively upskilling alongside college coursework
+User Count (Phase 1)
+3 users (1 CR + 2 friends) with architecture supporting growth
+Usage Pattern
+Real-time logging during sessions, review during commute or end-of-day
+Devices
+Browser on laptop (primary), mobile browser (secondary)
+3. Goals & Success Metrics
+3.1 Product Goals
+Reduce session logging time from ~2 minutes (spreadsheet) to under 30 seconds.
+Surface patterns and insights that are invisible in raw spreadsheet data.
+Create passive social accountability among a friend group without toxic competition.
+Ensure zero data loss — all sessions persist reliably in the cloud.
+Build a system the user genuinely wants to open daily, not one they feel obligated to maintain.
+3.2 Success Metrics
+Metric
+Target
+Measurement Method
+Daily active logging
+5+ days/week per user
+Session entries per week
+Log entry time
+< 30 seconds per entry
+Time from page open to submit
+Streak retention
+User maintains 7-day streak within first 2 weeks
+Streak counter in DB
+AI insight engagement
+Weekly summary opened by user
+Button click event
+Next action completion
+> 60% of next actions marked complete
+Status updates in DB
+4. Scope
+4.1 Phase 1 — Core Platform (Build First)
+All features listed in Section 5 constitute Phase 1. This must be fully functional end-to-end before any Phase 2 work begins. Scope discipline is non-negotiable.
+4.2 Phase 2 — Enhancements (Post Phase 1)
+Exportable PDF monthly reports
+Mobile push notifications for streak-at-risk (requires PWA or native wrapper)
+AI mid-session nudges and smart task suggestions
+Advanced NPTEL progress analytics — week-by-week completion heatmap
+Records & Observations deadline notifications via email
+4.3 Explicitly Out of Scope
+Native mobile app (iOS/Android) — mobile web browser is sufficient for Phase 1
+Calendar integrations (Google Calendar, Outlook)
+LMS integrations (Moodle, Canvas)
+Payment / subscription tiers
+5. Feature Specifications
+5.1 Authentication & Account System
+Authentication — Google OAuth via Supabase
+1
+Login exclusively via Google OAuth 2.0, handled by Supabase Auth. No email/password signup.
+2
+On first login, user is redirected to a one-time Profile Setup page before accessing the app.
+3
+JWT session tokens managed by Supabase client SDK. Tokens auto-refresh.
+4
+Protected routes — unauthenticated users redirected to login page.
+5
+Logout clears session and redirects to login.
+5.2 Profile Page
+User Profile
+1
+Fields: Full Name, Email (auto-filled from Google, read-only), College Name, Year of Study, Current Semester.
+2
+Semester Start Date and Semester End Date — used to calculate semester progress across the app.
+3
+Profile photo pulled from Google account. No manual upload required.
+4
+NPTEL section is a separate module (Section 5.7), not part of the profile page.
+5
+All fields except email are editable at any time via the Profile page.
+5.3 Session Logger — Core Logging Interface
+Quick-Log Form
+1
+Accessible from a persistent '+' button / FAB (Floating Action Button) visible on all pages.
+2
+Fields: Date (default today), Category (dropdown), Title/Task Name, What I Did Today (textarea), Status (dropdown: In Progress / Completed / Paused), Start Time, End Time, Was it Useful (toggle: Yes / No), Next Action (optional freetext).
+3
+Category dropdown options: DSA, Course / Learning, Projects, College Work, Other.
+4
+College Work sub-type selector (visible only when College Work is selected): Record, Observation, Assignment. If Record/Observation/Assignment is selected, a Due Date field appears.
+5
+Duration is auto-calculated from Start Time and End Time and displayed in real-time as the user fills the form.
+6
+Session Continuity: If the same Task Name exists from a previous entry today, user is prompted to 'Resume this task?' — clicking yes pre-fills Category, Title, and copies the last Next Action as the starting context.
+7
+On submit, entry is saved to the database and a success toast is shown. Form resets for next entry.
+8
+Integrated Pomodoro Timer (optional): User can start a built-in timer from the logger. When the timer ends, the Start and End Time fields are auto-filled. This is a toggle — timer is not mandatory.
+5.4 Analytics Dashboard
+Personal Dashboard
+1
+Default landing page after login.
+2
+Today at a Glance: Total sessions today, total minutes logged today, categories covered.
+3
+Weekly Activity Heatmap: 7-day grid showing intensity of logging activity (similar to GitHub contributions). Clicking a day shows that day's sessions in a side panel.
+4
+Time by Category: Horizontal bar chart showing total minutes per category (DSA, Projects, etc.) for the current week. Toggle to view by month.
+5
+Useful vs Not Useful Ratio: Donut chart per category. This surfaces that e.g. mandatory project sessions are consistently marked as not useful.
+6
+Current Streak Counter: Consecutive days with at least one logged session. Displayed prominently.
+7
+Streak at Risk Indicator: If no session has been logged by 9 PM on the current day, a subtle warning banner appears on the dashboard ('Your streak is at risk — log a session today').
+8
+Semester Progress Bar: Visual bar showing how far into the semester the user is, calculated from profile Semester Start/End dates.
+9
+Quick Stats: All-time total hours logged, total sessions, most active category.
+5.5 Next Actions & Deadlines Panel
+Task & Deadline Engine
+1
+Next Actions Panel: All entries with a non-empty Next Action field and status not 'Done' are surfaced here automatically.
+2
+Each item shows: Task name, what the next action is, date it was logged, source category.
+3
+User can mark a Next Action as 'Done' directly from this panel without opening the full session log.
+4
+Deadlines Panel: All College Work entries (Records, Observations, Assignments) with a Due Date are shown here, sorted by due date ascending.
+5
+Each deadline shows: Task name, sub-type (Record/Observation/Assignment), due date, days remaining.
+6
+Overdue items are highlighted in red. Due within 3 days are highlighted in amber.
+7
+User marks a deadline as 'Submitted' to clear it from the panel.
+5.6 Session History — Look Back
+History View
+1
+Full chronological log of all sessions, newest first.
+2
+Filter by: Category (multi-select), Status, Date Range, Was it Useful (Yes/No/All).
+3
+Search by Task Name keyword.
+4
+Each row shows: Date, Category chip (color-coded), Task Name, What I Did, Duration, Useful indicator, Next Action.
+5
+Clicking a row expands it to show full details and allows editing or deletion.
+6
+No pagination needed at Phase 1 scale — infinite scroll with virtual rendering.
+5.7 NPTEL Progress Tracker (Optional Module)
+NPTEL Course Tracker
+1
+This module is completely optional. Users who are not enrolled in any NPTEL course simply do not see this section.
+2
+Opt-in from the sidebar: 'Add NPTEL Course' — user enters Course Name and Total Number of Weeks.
+3
+Multiple courses can be tracked simultaneously.
+4
+Per course, the user sees a week-by-week grid. Each week can be marked as: Not Started, In Progress, Completed.
+5
+A progress bar shows overall completion percentage.
+6
+Sessions logged under 'Course / Learning' with a matching course name are auto-linked to the relevant NPTEL course entry.
+7
+No external API integration — this is purely manual tracking.
+5.8 Friend Activity Feed & Group Analytics
+Social Accountability Layer
+1
+Friend system: Users can add friends by searching for their registered email. Friend requests require acceptance.
+2
+Activity Feed: A real-time-updating feed showing what friends have logged today. Format: '[Friend Name] logged 45 min on DSA — Completed Binary Trees'. Only today's activity is shown.
+3
+This is a passive read-only feed — no likes, comments, or reactions in Phase 1.
+4
+Group Analytics View: A multi-bar or grouped bar chart showing time spent per category per friend, for the current week. This is the 'who has done what' view.
+5
+Leaderboard tab: Weekly time leaderboard among friends. Purely time-based, not weighted by category. Shown as a simple ranked list with a bar chart, not a gamified badge system.
+6
+Privacy: Users can toggle 'Hide my activity from friends' in settings. When enabled, they do not appear in the feed or group analytics.
+5.9 AI-Powered Insights Engine
+Claude API Integration
+1
+Weekly Summary (manual trigger): A 'Generate My Week Summary' button on the dashboard sends the last 7 days of the user's sessions to the Claude API and returns a structured insight block.
+2
+Summary format: Total time logged, breakdown by category, most productive day, least productive day, useful vs not-useful ratio, 2–3 specific observations, and 1–2 actionable recommendations.
+3
+The summary is displayed inline on the dashboard and saved to the database so it can be reviewed later.
+4
+Tone: Direct, factual, no motivational fluff. The AI should call out patterns honestly.
+5
+Rate limiting: One AI summary generation per user per day to control API costs.
+6
+The API call is made from the backend (Node/Express), never from the frontend, to protect the API key.
+6. Data Model
+6.1 users
+Column
+Type
+Notes
+id
+uuid (PK)
+Auto-generated by Supabase Auth
+email
+text
+From Google OAuth, unique
+full_name
+text
+college
+text
+year
+integer
+semester
+integer
+semester_start
+date
+semester_end
+date
+avatar_url
+text
+Google profile photo URL
+hide_from_friends
+boolean
+Default false
+created_at
+timestamptz
+Auto
+6.2 sessions
+Column
+Type
+Notes
+id
+uuid (PK)
+user_id
+uuid (FK)
+References users.id
+date
+date
+category
+enum
+DSA, Course/Learning, Projects, College Work, Other
+college_work_type
+enum
+Record, Observation, Assignment — nullable
+title
+text
+Task name
+what_i_did
+text
+status
+enum
+In Progress, Completed, Paused
+start_time
+time
+end_time
+time
+duration_minutes
+integer
+Auto-calculated
+was_useful
+boolean
+next_action
+text
+Nullable
+next_action_done
+boolean
+Default false
+due_date
+date
+Nullable — for College Work only
+deadline_submitted
+boolean
+Default false
+created_at
+timestamptz
+Auto
+6.3 nptel_courses
+Column
+Type
+Notes
+id
+uuid (PK)
+user_id
+uuid (FK)
+course_name
+text
+total_weeks
+integer
+created_at
+timestamptz
+Auto
+6.4 nptel_weeks
+Column
+Type
+Notes
+id
+uuid (PK)
+course_id
+uuid (FK)
+References nptel_courses.id
+week_number
+integer
+status
+enum
+Not Started, In Progress, Completed
+updated_at
+timestamptz
+Auto
+6.5 friendships
+Column
+Type
+Notes
+id
+uuid (PK)
+requester_id
+uuid (FK)
+addressee_id
+uuid (FK)
+status
+enum
+Pending, Accepted, Rejected
+created_at
+timestamptz
+Auto
+6.6 ai_summaries
+Column
+Type
+Notes
+id
+uuid (PK)
+user_id
+uuid (FK)
+week_start
+date
+Monday of the week summarised
+summary_json
+jsonb
+Structured response from Claude API
+generated_at
+timestamptz
+7. Technical Architecture
+7.1 Stack Overview
+Frontend
+React 18 + Vite, Tailwind CSS, Recharts (data viz), React Query (data fetching/caching)
+Backend
+Node.js + Express — REST API, handles all Anthropic API calls server-side
+Database & Auth
+Supabase — PostgreSQL + Supabase Auth (Google OAuth) + Supabase Realtime (activity feed)
+AI
+Anthropic Claude API (claude-sonnet-4-6) — called exclusively from backend
+Frontend Hosting
+Vercel — auto-deploy from main branch
+Backend Hosting
+Render or Railway — free tier sufficient for Phase 1
+Environment Variables
+SUPABASE_URL, SUPABASE_SERVICE_KEY, ANTHROPIC_API_KEY stored in Render/Railway env
+7.2 Architecture Principles
+The Anthropic API key is never exposed to the frontend. All AI calls go through the Express backend.
+Supabase Row Level Security (RLS) is enabled on all tables — users can only read/write their own data, except for friendship-related queries which are scoped appropriately.
+The Activity Feed uses Supabase Realtime subscriptions on the sessions table, filtered by friend user IDs.
+All timestamps stored in UTC. Frontend converts to local time for display.
+React Query handles caching, background refresh, and optimistic updates for a responsive UI.
+7.3 API Endpoints (Backend)
+Method
+Route
+Description
+POST
+/api/ai/weekly-summary
+Accepts user_id, fetches last 7 days from DB, calls Claude API, saves and returns summary
+GET
+/api/health
+Health check endpoint
+All other data operations (CRUD for sessions, profiles, NPTEL, friendships) are performed directly via the Supabase client SDK from the frontend, protected by RLS policies.
+8. UX & UI Guidelines
+8.1 Design Principles
+Speed first — the logger must feel instant. No multi-step wizards.
+Dark-mode friendly — students log late at night. Offer system-preference-aware theming.
+Minimal chrome — the data is the UI. Charts and session entries should dominate the screen, not navigation.
+Mobile-responsive — the app must be fully usable on a phone browser (bus commute use case).
+8.2 Navigation Structure
+Dashboard
+Default home — analytics, streak, summary
+Log Session
+FAB button accessible from all pages
+History
+Full session log with filters
+Next Actions
+Pending next actions + deadlines panel
+Friends
+Activity feed + group analytics + leaderboard
+NPTEL
+Optional course tracker
+Profile
+User details + settings
+8.3 Color Coding for Categories
+Category
+Color
+DSA
+Blue (#3B82F6)
+Course / Learning
+Purple (#8B5CF6)
+Projects
+Emerald (#10B981)
+College Work
+Amber (#F59E0B)
+Other
+Gray (#6B7280)
+9. Non-Functional Requirements
+Performance
+Dashboard loads in under 2 seconds on a standard connection. Logger form submission completes in under 1 second.
+Reliability
+Supabase managed Postgres provides 99.9% uptime SLA. Data is never lost on network failure — optimistic UI with retry.
+Security
+Google OAuth only — no passwords stored. RLS on all Supabase tables. API keys in server environment variables only.
+Scalability
+Architecture supports growth from 3 to 50+ users without redesign. Supabase free tier supports up to 50,000 monthly active users.
+Accessibility
+WCAG 2.1 AA compliance for core flows — sufficient color contrast, keyboard navigation, aria labels on form inputs.
+Data Privacy
+Friend activity feed respects the hide_from_friends toggle. No data is sold or shared. Supabase data hosted on AWS (choose region closest to India).
+10. Risks & Mitigations
+Risk
+Likelihood
+Impact
+Mitigation
+Scope creep mid-build
+High
+High
+Phase 1 scope is frozen. All new ideas go into a Phase 2 backlog document.
+Anthropic API cost overrun
+Medium
+Medium
+Rate limit AI summary to 1 per user per day. Monitor usage via Anthropic console.
+Supabase free tier limits
+Low
+Medium
+Free tier is generous for 3 users. No action needed in Phase 1.
+Friend system complexity slowing Phase 1
+Medium
+Medium
+Build friend system last within Phase 1. All other features are independent of it.
+Users stop logging after 2 weeks
+Medium
+High
+Streak-at-risk indicator + AI summaries are the primary retention mechanisms. No additional gamification in Phase 1.
+11. Claude Code Development Guide
+This section is a direct briefing for Claude Code. Hand the following instructions along with this PRD.
+11.1 Recommended Build Order
+Step 1 — Supabase setup: Create all tables from Section 6 with RLS policies. Enable Google OAuth provider.
+Step 2 — Auth flow: Google OAuth login, protected routes, profile setup page.
+Step 3 — Session Logger: The core form with all fields, Pomodoro timer toggle, session continuity detection.
+Step 4 — Session History: Full log view with filters and search.
+Step 5 — Dashboard: All analytics components using Recharts. Streak logic. Streak-at-risk banner.
+Step 6 — Next Actions & Deadlines panel.
+Step 7 — NPTEL Tracker module.
+Step 8 — Express backend + Claude API weekly summary endpoint.
+Step 9 — Friend system: Search, request, accept, activity feed (Supabase Realtime), group analytics.
+Step 10 — Polish: Mobile responsiveness, dark mode, loading states, error boundaries.
+11.2 Prompt Template for Claude Code
+"Build LearnOS — a personal study intelligence web app. Tech stack: React + Vite + Tailwind CSS frontend, Node.js + Express backend, Supabase for PostgreSQL database and Google OAuth authentication, Anthropic Claude API for AI summaries. Refer to the PRD for the complete data model, feature specifications, API endpoints, and build order. Start with Step 1: Supabase schema setup and Google OAuth auth flow."
+11.3 Key Implementation Notes
+Use React Query (TanStack Query) for all Supabase data fetching. Do not use useEffect + fetch manually.
+All chart components use Recharts. No other charting library.
+The Anthropic API call must live in the Express backend at POST /api/ai/weekly-summary. Never call it from React.
+Use Supabase Realtime for the activity feed — subscribe to INSERT events on the sessions table filtered by friend IDs.
+Duration calculation: (end_time - start_time) in minutes. Store as integer in the DB. Display as 'Xh Ym' format in the UI.
+Implement the streak-at-risk check as a client-side computation on the dashboard: if no session exists for today and current local time > 21:00, show the banner.
+12. Appendix — Original Data Fields (Source Sheet)
+The following fields were mapped from the original Google Sheets tracker to ensure complete feature parity:
+Sheet Column
+LearnOS Field
+Notes
+Date
+sessions.date
+Day
+Derived from date
+Calculated, not stored
+Category
+sessions.category
+Same dropdown options
+Title/Task
+sessions.title
+What I Did Today
+sessions.what_i_did
+Status
+sessions.status
+Start Time
+sessions.start_time
+End Time
+sessions.end_time
+Time Spent (min) - Auto
+sessions.duration_minutes
+Auto-calculated
+Was it useful?
+sessions.was_useful
+Boolean toggle
+Next Action
+sessions.next_action
+All original data fields are preserved. LearnOS adds: next_action_done, college_work_type, due_date, deadline_submitted — none of which existed in the sheet.
+End of Document — LearnOS PRD v1.0
