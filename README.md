@@ -4,7 +4,16 @@
 
 A cloud-based study tracking and analytics platform that transforms raw learning session data into actionable intelligence.
 
-## Tech Stack
+## 🚀 Features
+
+- **Session Logger**: Track study time with an integrated Pomodoro timer and categorize work.
+- **Analytics Dashboard**: Visualize progress with weekly heatmaps, category charts, and streak tracking.
+- **Smart Actions**: Track pending next actions and upcoming college submission deadlines.
+- **NPTEL Tracker**: Manage course progress week-by-week.
+- **Social Learning**: Connect with friends, view real-time activity feeds, and compete on leaderboards.
+- **Dark Mode**: Built-in support for system-aware dark themes.
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|------------|
@@ -13,7 +22,7 @@ A cloud-based study tracking and analytics platform that transforms raw learning
 | Database & Auth | Supabase (PostgreSQL + Google OAuth + Realtime) |
 | AI | Anthropic Claude API |
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 learnos/
@@ -30,14 +39,13 @@ learnos/
 └── README.md
 ```
 
-## Getting Started
+## 🏁 Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
 - npm 9+
 - A [Supabase](https://supabase.com) project with Google OAuth configured
-- An [Anthropic](https://console.anthropic.com) API key
 
 ### Frontend Setup
 
@@ -63,7 +71,7 @@ npm run dev
 
 The backend server will start at `http://localhost:3001`.
 
-## Environment Variables
+## ⚙️ Environment Variables
 
 ### Frontend (`frontend/.env`)
 
