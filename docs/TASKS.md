@@ -572,10 +572,13 @@ Create `src/pages/NextActionsPage.tsx` with two sections:
 **What to do:**  
 Create `src/pages/NptelPage.tsx`:
 
+**Context: **
+NPTEL examinations are made mandatory in some colleges and not so mandatory in some college. if an NPTEL course is say 12 weeks long, then there will be 12 assignments and programming questions (for some courses) and 1 final exam. 
+
 **Empty state:** "You haven't added any NPTEL courses yet. Add one to start tracking." with an "Add Course" button.
 
 **Add Course modal/form:**
-- Fields: Course Name (text), Total Weeks (number, 1–16)
+- Fields: Course Name (text), Total Weeks (number, 1–16), course instructor name (text), course provider (text, like which college provides the course), no. of credits (number)
 - On submit: inserts into `nptel_courses`, then bulk-inserts N rows into `nptel_weeks` (one per week, all defaulting to 'Not Started')
 
 **Course list:**
