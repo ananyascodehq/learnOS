@@ -386,12 +386,15 @@ function ActivityTab() {
         ...(queryFeed ?? []),
     ].filter((item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx)
 
+    // Stable string key so the effect only re-runs when the actual IDs change
+    const friendIdsKey = friendIds.join(',')
+
     // Supabase Realtime subscription
     useEffect(() => {
-        if (!user || friendIds.length === 0) return
+        if (!user || !friendIdsKey) return
 
-        channelRef.current = supabase
-            .channel('friend-sessions')
+        const channel = supabase
+            .channel(`friend-sessions:${user.id}`)  // user-scoped to avoid cross-tab lock conflicts
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'sessions' },
@@ -399,7 +402,6 @@ function ActivityTab() {
                     const newSession = payload.new as Session
                     if (!friendIds.includes(newSession.user_id)) return
 
-                    // Fetch the friend's profile to check hide_from_friends
                     const { data: profile } = await supabase
                         .from('users')
                         .select('*')
@@ -421,10 +423,12 @@ function ActivityTab() {
             )
             .subscribe()
 
+        channelRef.current = channel
+
         return () => {
-            channelRef.current?.unsubscribe()
+            channel.unsubscribe()
         }
-    }, [user, friendIds])
+    }, [user, friendIdsKey])  // stable string, not array reference
 
     if (isLoading) {
         return (
