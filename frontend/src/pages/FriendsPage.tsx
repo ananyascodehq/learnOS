@@ -324,7 +324,8 @@ function FriendsTab() {
 
 function ActivityTab() {
     const { user } = useAuth()
-    const [feedItems, setFeedItems] = useState<FeedItem[]>([])
+    // Only stores items pushed via Realtime — initial data comes straight from the query
+    const [realtimeItems, setRealtimeItems] = useState<FeedItem[]>([])
     const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
     // Get accepted friend IDs
@@ -344,10 +345,10 @@ function ActivityTab() {
     })
 
     // Initial feed data: today's sessions from friends (non-hidden)
-    const { data: initialFeed = [], isLoading } = useQuery({
+    const { data: queryFeed, isLoading } = useQuery({
         queryKey: ['friend-activity', user?.id, friendIds],
         queryFn: async () => {
-            if (friendIds.length === 0) return []
+            if (friendIds.length === 0) return [] as FeedItem[]
             const today = getTodayString()
 
             const { data: sessions } = await supabase
@@ -359,7 +360,6 @@ function ActivityTab() {
 
             if (!sessions || sessions.length === 0) return [] as FeedItem[]
 
-            // Get the user profiles for those friends
             const { data: profiles } = await supabase
                 .from('users')
                 .select('*')
@@ -380,10 +380,11 @@ function ActivityTab() {
         enabled: friendIds.length > 0,
     })
 
-    // Sync initial feed into state
-    useEffect(() => {
-        setFeedItems(initialFeed)
-    }, [initialFeed])
+    // Merge realtime items on top of query data (deduplicated by id)
+    const feedItems: FeedItem[] = [
+        ...realtimeItems,
+        ...(queryFeed ?? []),
+    ].filter((item, idx, arr) => arr.findIndex((i) => i.id === item.id) === idx)
 
     // Supabase Realtime subscription
     useEffect(() => {
@@ -414,7 +415,7 @@ function ActivityTab() {
                         session: newSession,
                         insertedAt: newSession.created_at ?? new Date().toISOString(),
                     }
-                    setFeedItems((prev) => [item, ...prev])
+                    setRealtimeItems((prev) => [item, ...prev])
                     toast(`${profile.full_name ?? profile.email} logged a session!`, { icon: '📚' })
                 },
             )
@@ -489,7 +490,7 @@ function ActivityTab() {
 // ─── Leaderboard Tab (Task 027) ─────────────────────────────────────────────
 
 function LeaderboardTab() {
-    const { user, profile } = useAuth()
+    const { user } = useAuth()
 
     // Get accepted friend IDs
     const { data: friendIds = [] } = useQuery({
@@ -591,8 +592,8 @@ function LeaderboardTab() {
                     <div
                         key={u.id}
                         className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-colors ${isMe
-                                ? 'bg-primary/8 border-primary/20'
-                                : 'bg-white/[0.03] border-white/5 hover:border-white/10'
+                            ? 'bg-primary/8 border-primary/20'
+                            : 'bg-white/[0.03] border-white/5 hover:border-white/10'
                             }`}
                     >
                         {/* Rank */}
@@ -663,8 +664,8 @@ export default function FriendsPage() {
                         type="button"
                         onClick={() => setTab(t.id)}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer ${tab === t.id
-                                ? 'bg-white/10 text-white shadow-sm'
-                                : 'text-muted hover:text-white'
+                            ? 'bg-white/10 text-white shadow-sm'
+                            : 'text-muted hover:text-white'
                             }`}
                     >
                         {t.icon}
