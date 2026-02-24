@@ -1,9 +1,14 @@
-import { useQuery } from '@tanstack/react-query'
-import type { UseQueryResult } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { UseQueryResult, UseInfiniteQueryResult, InfiniteData } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import type { Session } from '../types'
 import type { SessionFilters } from '../types/filters'
+import type { Database } from '../types/database.types'
+
+type SessionUpdate = Database['public']['Tables']['sessions']['Update']
+
+const PAGE_SIZE = 20
 
 function getTodayString(): string {
     return new Date().toISOString().split('T')[0]
@@ -184,5 +189,100 @@ export function useStreak(): UseQueryResult<number> {
             return streak
         },
         enabled: !!user,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Infinite / paginated sessions (for History page)
+// ---------------------------------------------------------------------------
+
+export type InfiniteSessionsResult = UseInfiniteQueryResult<InfiniteData<Session[]>>
+
+export function useInfiniteSessions(filters: SessionFilters): InfiniteSessionsResult {
+    const { user } = useAuth()
+
+    return useInfiniteQuery({
+        queryKey: ['sessions', 'infinite', user?.id, filters],
+        queryFn: async ({ pageParam = 0 }) => {
+            const from = (pageParam as number) * PAGE_SIZE
+            const to = from + PAGE_SIZE - 1
+
+            let query = supabase
+                .from('sessions')
+                .select('*')
+                .eq('user_id', user!.id)
+                .order('date', { ascending: false })
+                .order('created_at', { ascending: false })
+                .range(from, to)
+
+            if (filters.categories && filters.categories.length > 0) {
+                query = query.in('category', filters.categories)
+            }
+            if (filters.status && filters.status !== 'all') {
+                query = query.eq('status', filters.status)
+            }
+            if (filters.wasUseful !== undefined && filters.wasUseful !== null) {
+                query = query.eq('was_useful', filters.wasUseful)
+            }
+            if (filters.dateFrom) {
+                query = query.gte('date', filters.dateFrom)
+            }
+            if (filters.dateTo) {
+                query = query.lte('date', filters.dateTo)
+            }
+            if (filters.search) {
+                query = query.or(`title.ilike.%${filters.search}%,what_i_did.ilike.%${filters.search}%`)
+            }
+
+            const { data, error } = await query
+            if (error) throw error
+            return (data ?? []) as Session[]
+        },
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages) => {
+            // If the last page returned a full page, there may be more
+            if (lastPage.length === PAGE_SIZE) {
+                return allPages.length
+            }
+            return undefined
+        },
+        enabled: !!user,
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Delete session mutation
+// ---------------------------------------------------------------------------
+
+export function useDeleteSession() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (sessionId: string) => {
+            const { error } = await supabase.from('sessions').delete().eq('id', sessionId)
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions'] })
+            queryClient.invalidateQueries({ queryKey: ['streak'] })
+        },
+    })
+}
+
+// ---------------------------------------------------------------------------
+// Update session mutation (for edit)
+// ---------------------------------------------------------------------------
+
+export function useUpdateSession() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({ id, updates }: { id: string; updates: SessionUpdate }) => {
+            const { error } = await supabase.from('sessions').update(updates).eq('id', id)
+            if (error) throw error
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['sessions'] })
+        },
     })
 }
