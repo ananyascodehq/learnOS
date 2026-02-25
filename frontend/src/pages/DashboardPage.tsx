@@ -1,5 +1,5 @@
 import { useSessionsToday, useSessionsThisWeek, useSessionsThisMonth, useStreak } from '../hooks/useSessions'
-import { CATEGORIES } from '../constants/categories'
+import { getCategoryColor } from '../constants/categories'
 import { Clock, Layers, Flame, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import WeeklyHeatmap from '../components/dashboard/WeeklyHeatmap'
 import CategoryChart from '../components/dashboard/CategoryChart'
@@ -20,8 +20,7 @@ export default function DashboardPage() {
 
     const uniqueCategories = new Set(todaySessions.map((s) => s.category)).size
 
-    const getCategoryColor = (cat: string) =>
-        CATEGORIES.find((c) => c.value === cat)?.color ?? '#6B7280'
+
 
     const stats = [
         {

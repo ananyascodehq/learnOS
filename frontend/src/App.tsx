@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import AppShell from './components/layout/AppShell'
 import LoginPage from './pages/LoginPage'
@@ -21,22 +22,27 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <Routes>
-      {/* Public route */}
-      <Route path="/login" element={<LoginPage />} />
+    <ErrorBoundary>
+      <Routes>
+        {/* Public route */}
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Auth required but no shell */}
-      <Route path="/setup-profile" element={<ProfileSetupPage />} />
+        {/* Auth required but no shell */}
+        <Route path="/setup-profile" element={<ProfileSetupPage />} />
 
-      {/* Protected routes with AppShell */}
-      <Route path="/" element={<ProtectedLayout><DashboardPage /></ProtectedLayout>} />
-      <Route path="/log" element={<ProtectedLayout><LogSessionPage /></ProtectedLayout>} />
-      <Route path="/history" element={<ProtectedLayout><HistoryPage /></ProtectedLayout>} />
-      <Route path="/next-actions" element={<ProtectedLayout><NextActionsPage /></ProtectedLayout>} />
-      <Route path="/friends" element={<ProtectedLayout><FriendsPage /></ProtectedLayout>} />
-      <Route path="/nptel" element={<ProtectedLayout><NptelPage /></ProtectedLayout>} />
-      <Route path="/profile" element={<ProtectedLayout><ProfilePage /></ProtectedLayout>} />
-    </Routes>
+        {/* Protected routes with AppShell */}
+        <Route path="/" element={<ProtectedLayout><DashboardPage /></ProtectedLayout>} />
+        <Route path="/log" element={<ProtectedLayout><LogSessionPage /></ProtectedLayout>} />
+        <Route path="/history" element={<ProtectedLayout><HistoryPage /></ProtectedLayout>} />
+        <Route path="/next-actions" element={<ProtectedLayout><NextActionsPage /></ProtectedLayout>} />
+        <Route path="/friends" element={<ProtectedLayout><FriendsPage /></ProtectedLayout>} />
+        <Route path="/nptel" element={<ProtectedLayout><NptelPage /></ProtectedLayout>} />
+        <Route path="/profile" element={<ProtectedLayout><ProfilePage /></ProtectedLayout>} />
+
+        {/* 404 – redirect to dashboard */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ErrorBoundary>
   )
 }
 

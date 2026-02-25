@@ -7,8 +7,7 @@ import {
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import type { NptelCourse, NptelWeek } from '../types'
-import type { NptelStatus } from '../types'
+import type { NptelCourse, NptelWeek, NptelStatus } from '../types'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,11 +37,10 @@ const WEEK_DOT: Record<NptelStatus, string> = {
 // ─── Week Grid (Task 024) ─────────────────────────────────────────────────────
 
 interface WeekGridProps {
-    courseId: string
     weeks: NptelWeek[]
 }
 
-function WeekGrid({ courseId, weeks }: WeekGridProps) {
+function WeekGrid({ weeks }: WeekGridProps) {
     const queryClient = useQueryClient()
 
     const { mutate: toggleWeek, isPending } = useMutation({
@@ -161,7 +159,7 @@ function CourseCard({ course }: { course: CourseWithWeeks }) {
             </div>
 
             {/* Week grid (expanded) */}
-            {expanded && <WeekGrid courseId={course.id} weeks={course.weeks} />}
+            {expanded && <WeekGrid weeks={course.weeks} />}
         </div>
     )
 }

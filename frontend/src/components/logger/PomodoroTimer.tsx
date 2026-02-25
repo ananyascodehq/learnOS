@@ -1,5 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Timer, X, Play, Pause } from 'lucide-react'
+import { usePomodoro } from '../../contexts/PomodoroContext'
+
 
 interface PomodoroTimerProps {
     onStart: (time: string) => void
@@ -7,9 +10,10 @@ interface PomodoroTimerProps {
     onCancel: () => void
 }
 
+
 const DURATION_OPTIONS = [
-    { label: '25 min', value: 25 },
-    { label: '50 min', value: 50 },
+    { label: '25 min', value: 1500 },
+    { label: '50 min', value: 3000 },
 ]
 
 function formatTimeOfDay(): string {
@@ -17,19 +21,20 @@ function formatTimeOfDay(): string {
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
 }
 
-export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTimerProps) {
-    const [duration, setDuration] = useState(25)
-    const [secondsLeft, setSecondsLeft] = useState(25 * 60)
-    const [isRunning, setIsRunning] = useState(false)
-    const [isStarted, setIsStarted] = useState(false)
-    const [isComplete, setIsComplete] = useState(false)
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-    const audioRef = useRef<AudioContext | null>(null)
 
-    const totalSeconds = duration * 60
-    const progress = isStarted ? 1 - (secondsLeft / totalSeconds) : 0
-    const minutes = Math.floor(secondsLeft / 60)
-    const seconds = secondsLeft % 60
+export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTimerProps) {
+    const { running, duration, remaining, start, stop, setTaskTitle, taskTitle } = usePomodoro();
+    const [localDuration, setLocalDuration] = useState(1500);
+    const [isStarted, setIsStarted] = useState(false);
+    const [isComplete, setIsComplete] = useState(false);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const audioRef = useRef<AudioContext | null>(null);
+
+    const totalSeconds = duration;
+    const secondsLeft = running ? remaining : localDuration;
+    const progress = isStarted ? 1 - (secondsLeft / totalSeconds) : 0;
+    const minutes = Math.floor(secondsLeft / 60);
+    const seconds = secondsLeft % 60;
 
     const playBeep = useCallback(() => {
         try {
@@ -58,58 +63,51 @@ export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTime
         }
     }, [])
 
-    useEffect(() => {
-        if (isRunning && secondsLeft > 0) {
-            intervalRef.current = setInterval(() => {
-                setSecondsLeft((prev) => {
-                    if (prev <= 1) {
-                        setIsRunning(false)
-                        setIsComplete(true)
-                        playBeep()
-                        onEnd(formatTimeOfDay())
-                        return 0
-                    }
-                    return prev - 1
-                })
-            }, 1000)
-        }
 
-        return () => {
-            if (intervalRef.current) clearInterval(intervalRef.current)
+    useEffect(() => {
+        if (running && remaining === 0) {
+            setIsComplete(true);
+            playBeep();
+            onEnd(formatTimeOfDay());
         }
-    }, [isRunning, secondsLeft, onEnd, playBeep])
+    }, [running, remaining, onEnd, playBeep]);
+
 
     const handleStart = () => {
         if (!isStarted) {
-            setIsStarted(true)
-            onStart(formatTimeOfDay())
+            setIsStarted(true);
+            setTaskTitle('');
+            onStart(formatTimeOfDay());
+            start(localDuration);
+        } else if (!running) {
+            start(duration);
         }
-        setIsRunning(true)
-    }
+    };
+
 
     const handlePause = () => {
-        setIsRunning(false)
-    }
+        stop();
+    };
+
 
     const handleCancel = () => {
-        setIsRunning(false)
-        setIsStarted(false)
-        setIsComplete(false)
-        setSecondsLeft(duration * 60)
-        if (intervalRef.current) clearInterval(intervalRef.current)
-        onCancel()
-    }
+        stop();
+        setIsStarted(false);
+        setIsComplete(false);
+        onCancel();
+    };
 
-    const handleDurationChange = (mins: number) => {
-        if (isStarted) return
-        setDuration(mins)
-        setSecondsLeft(mins * 60)
-    }
+
+    const handleDurationChange = (secs: number) => {
+        if (isStarted) return;
+        setLocalDuration(secs);
+    };
+
 
     // SVG circle math
-    const radius = 54
-    const circumference = 2 * Math.PI * radius
-    const strokeDashoffset = circumference * (1 - progress)
+    const radius = 54;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference * (1 - progress);
 
     return (
         <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">

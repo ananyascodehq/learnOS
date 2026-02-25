@@ -6,7 +6,7 @@ import {
     ArrowRight, Tag
 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { CATEGORIES } from '../constants/categories'
+import { CATEGORIES, getCategoryColor } from '../constants/categories'
 import { useInfiniteSessions, useDeleteSession } from '../hooks/useSessions'
 import type { SessionFilters } from '../types/filters'
 import type { Session } from '../types'
@@ -27,9 +27,7 @@ function formatDate(d: string): string {
     })
 }
 
-function getCategoryColor(cat: string): string {
-    return CATEGORIES.find((c) => c.value === cat)?.color ?? '#6B7280'
-}
+
 
 const STATUS_OPTIONS: { label: string; value: SessionStatus | 'all' }[] = [
     { label: 'All', value: 'all' },

@@ -1,16 +1,13 @@
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCheck, Calendar, ArrowRight, ClipboardList, AlertCircle, Clock3 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
-import { CATEGORIES } from '../constants/categories'
+import { getCategoryColor } from '../constants/categories'
 import type { Session } from '../types'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
-
-function getCategoryColor(cat: string): string {
-    return CATEGORIES.find((c) => c.value === cat)?.color ?? '#6B7280'
-}
 
 function formatDate(d: string): string {
     return new Date(d).toLocaleDateString('en-US', {
@@ -128,7 +125,7 @@ function NextActionsSection() {
                                     {/* Category chip */}
                                     <span
                                         className="shrink-0 text-xs px-2.5 py-1 rounded-full font-medium mt-0.5"
-                                        style={{ backgroundColor: `${catColor}18`, color: catColor }}
+                                        style={{ backgroundColor: `${catColor} 18`, color: catColor }}
                                     >
                                         {session.category}
                                     </span>
@@ -248,17 +245,17 @@ function DeadlinesSection() {
                         return (
                             <div
                                 key={session.id}
-                                className={`border rounded-2xl px-4 py-4 transition-all duration-150 ${days < 0
+                                className={`border rounded - 2xl px - 4 py - 4 transition - all duration - 150 ${days < 0
                                         ? 'bg-red-500/5 border-red-500/15 hover:bg-red-500/8'
                                         : days <= 3
                                             ? 'bg-college/5 border-college/15 hover:bg-college/8'
                                             : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.05]'
-                                    }`}
+                                    } `}
                             >
                                 <div className="flex items-start gap-3">
                                     {/* Work type badge */}
                                     {session.college_work_type && (
-                                        <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-medium mt-0.5 ${workTypeClass}`}>
+                                        <span className={`shrink - 0 text - xs px - 2.5 py - 1 rounded - full font - medium mt - 0.5 ${workTypeClass} `}>
                                             {session.college_work_type}
                                         </span>
                                     )}
@@ -271,7 +268,7 @@ function DeadlinesSection() {
                                                 <Calendar className="w-3 h-3" />
                                                 Due {formatDate(session.due_date!)}
                                             </span>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pillClass}`}>
+                                            <span className={`text - xs px - 2 py - 0.5 rounded - full font - medium ${pillClass} `}>
                                                 {days < 0 ? <AlertCircle className="w-3 h-3 inline mr-1" /> : null}
                                                 {label}
                                             </span>

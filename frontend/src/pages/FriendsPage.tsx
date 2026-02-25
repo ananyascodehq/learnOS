@@ -8,7 +8,7 @@ import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import type { User, Friendship, Session } from '../types'
-import { CATEGORIES } from '../constants/categories'
+import { getCategoryColor } from '../constants/categories'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,9 +40,6 @@ function formatMins(mins: number): string {
     return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-function getCategoryColor(cat: string) {
-    return CATEGORIES.find((c) => c.value === cat)?.color ?? '#6B7280'
-}
 
 function Avatar({ user, size = 'sm' }: { user: User; size?: 'sm' | 'md' | 'lg' }) {
     const s = size === 'lg' ? 'w-12 h-12 text-base' : size === 'md' ? 'w-9 h-9 text-sm' : 'w-8 h-8 text-xs'

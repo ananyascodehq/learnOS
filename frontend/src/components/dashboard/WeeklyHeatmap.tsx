@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Session } from '../../types'
-import { CATEGORIES } from '../../constants/categories'
+import { getCategoryColor } from '../../constants/categories'
 import { X, CheckCircle, XCircle } from 'lucide-react'
 
 interface WeeklyHeatmapProps {
@@ -64,9 +64,6 @@ export default function WeeklyHeatmap({ sessions }: WeeklyHeatmapProps) {
 
     const selectedSessions = selectedDay ? (sessionsByDate[selectedDay] ?? []) : []
 
-    const getCategoryColor = (cat: string) =>
-        CATEGORIES.find((c) => c.value === cat)?.color ?? '#6B7280'
-
     return (
         <div>
             <h2 className="text-lg font-semibold text-white mb-4">Weekly Activity</h2>
@@ -82,10 +79,10 @@ export default function WeeklyHeatmap({ sessions }: WeeklyHeatmapProps) {
                             type="button"
                             onClick={() => setSelectedDay(isSelected ? null : day.date)}
                             className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all duration-150 cursor-pointer ${isSelected
-                                    ? 'border-primary/50 ring-1 ring-primary/30'
-                                    : day.isToday
-                                        ? 'border-primary/30'
-                                        : 'border-transparent'
+                                ? 'border-primary/50 ring-1 ring-primary/30'
+                                : day.isToday
+                                    ? 'border-primary/30'
+                                    : 'border-transparent'
                                 }`}
                         >
                             <span className={`text-xs font-medium ${day.isToday ? 'text-primary' : 'text-muted'}`}>
