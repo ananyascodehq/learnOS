@@ -23,11 +23,10 @@ function formatTimeOfDay(): string {
 
 
 export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTimerProps) {
-    const { running, duration, remaining, start, stop, setTaskTitle, taskTitle } = usePomodoro();
+    const { running, duration, remaining, start, stop, setTaskTitle } = usePomodoro();
     const [localDuration, setLocalDuration] = useState(1500);
     const [isStarted, setIsStarted] = useState(false);
     const [isComplete, setIsComplete] = useState(false);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const audioRef = useRef<AudioContext | null>(null);
 
     const totalSeconds = duration;
@@ -134,8 +133,8 @@ export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTime
                             type="button"
                             onClick={() => handleDurationChange(opt.value)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-150 cursor-pointer ${duration === opt.value
-                                    ? 'border-primary/50 bg-primary/15 text-primary'
-                                    : 'border-white/5 bg-white/[0.02] text-muted hover:bg-white/5'
+                                ? 'border-primary/50 bg-primary/15 text-primary'
+                                : 'border-white/5 bg-white/[0.02] text-muted hover:bg-white/5'
                                 }`}
                         >
                             {opt.label}
@@ -189,7 +188,7 @@ export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTime
                 {/* Controls */}
                 {!isComplete && (
                     <div className="flex gap-3 mt-4">
-                        {isRunning ? (
+                        {running ? (
                             <button
                                 type="button"
                                 onClick={handlePause}
