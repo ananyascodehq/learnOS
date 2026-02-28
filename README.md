@@ -88,3 +88,4 @@ The backend server will start at `http://localhost:3001`.
 | `SUPABASE_SERVICE_KEY` | Your Supabase service role key |
 | `FRONTEND_URL` | Frontend origin for CORS (e.g. `http://localhost:5173`) |
 | `PORT` | Server port (default: `3001`) |
+| `GROQ_API_KEY` | Your Groq API key for AI debriefs and ghost text features |
