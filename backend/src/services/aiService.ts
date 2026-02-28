@@ -10,16 +10,16 @@ const NEXT_ACTION_SYSTEM_PROMPT = `Given the session context, suggest a single n
 // --- SERVICE IMPLEMENTATIONS ---
 
 export async function runDebrief({ sessionId, category, duration, what_i_did, was_useful, next_action }: any) {
-  if (!process.env.GROQ_API_KEY) {
-    console.log('[MOCK] AI Debrief called since no GROQ_API_KEY is available')
+  if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key' || process.env.GROQ_API_KEY === 'your_actual_groq_api_key_here') {
+    console.log('[MOCK] AI Debrief called since no valid GROQ_API_KEY is available')
     return `You struggled with distractions today, but completed your main task. Keep your phone away next time.`
   }
 
   // Compose prompt
   const userPrompt = `Category: ${category}\nDuration: ${duration} minutes\nWhat I did: ${what_i_did}\nWas it useful: ${was_useful}\nPlanned next action: ${next_action}`
   // Call Groq API (Llama 3.1 8B Instruct)
-  const response = await axios.post('https://api.groq.com/v1/chat/completions', {
-    model: 'llama3-8b-8192',
+  const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+    model: 'llama-3.1-8b-instant',
     messages: [
       { role: 'system', content: DEBRIEF_SYSTEM_PROMPT },
       { role: 'user', content: userPrompt }
@@ -41,16 +41,16 @@ export async function runWeeklySummary({ userId, weekStart }: any) {
 }
 
 export async function runNextActionSuggestion({ userId, category, what_i_did, recent_next_actions }: any) {
-  if (!process.env.GROQ_API_KEY) {
-    console.log('[MOCK] AI Suggest Next Action called since no GROQ_API_KEY is available')
+  if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key' || process.env.GROQ_API_KEY === 'your_actual_groq_api_key_here') {
+    console.log('[MOCK] AI Suggest Next Action called since no valid GROQ_API_KEY is available')
     return `Move on to the next section or review your notes.`
   }
 
   // Compose prompt
   const userPrompt = `Category: ${category}\nWhat I did: ${what_i_did}\nRecent next actions: ${recent_next_actions?.join('; ')}`
   // Call Groq API (Llama 3.1 8B Instruct)
-  const response = await axios.post('https://api.groq.com/v1/chat/completions', {
-    model: 'llama3-8b-8192',
+  const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+    model: 'llama-3.1-8b-instant',
     messages: [
       { role: 'system', content: NEXT_ACTION_SYSTEM_PROMPT },
       { role: 'user', content: userPrompt }

@@ -1,9 +1,14 @@
 import fs from 'fs'
 import path from 'path'
 
-const logPath = path.join(__dirname, '../../logs/ai_events.log')
-
 export function logAiCall({ userId, feature, latency_ms, success }: any) {
+  const logDir = path.join(__dirname, '../../logs')
+  const logPath = path.join(logDir, 'ai_events.log')
+
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true })
+  }
+
   const line = JSON.stringify({
     ts: new Date().toISOString(),
     user: userId,

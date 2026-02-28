@@ -55,6 +55,7 @@ export async function aiSuggestNextAction(req: Request, res: Response) {
     if (error) throw error
     res.json({ success: true, suggestion: result })
   } catch (err) {
+    console.error('AI suggest next action error:', err)
     res.status(500).json({ success: false, error: 'AI next-action suggestion failed' })
   }
 }

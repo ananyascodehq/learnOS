@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
 const aiLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
   max: 50,
-  keyGenerator: (req: any) => req.body.userId || req.ip,
+  keyGenerator: (req: any) => req.body?.userId || req.ip || 'anonymous',
   message: 'Daily AI usage limit reached. Try again tomorrow.',
 })
 app.use('/api/ai', aiLimiter)
