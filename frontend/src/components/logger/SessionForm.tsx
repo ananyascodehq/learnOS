@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
+import axios from 'axios'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { CATEGORIES } from '../../constants/categories'
@@ -70,6 +71,9 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
     const [endTime, setEndTime] = useState(initialData?.endTime ?? '')
     const [wasUseful, setWasUseful] = useState<boolean | null>(initialData?.wasUseful ?? null)
     const [nextAction, setNextAction] = useState(initialData?.nextAction ?? '')
+    const [suggestedNextAction, setSuggestedNextAction] = useState('')
+    const [suggesting, setSuggesting] = useState(false)
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const [saving, setSaving] = useState(false)
     const [matchedSession, setMatchedSession] = useState<Session | null>(null)
     const [showResumeBanner, setShowResumeBanner] = useState(false)
@@ -128,7 +132,12 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
         setEndTime('')
         setWasUseful(null)
         setNextAction('')
+        setSuggestedNextAction('')
+
+
+
     }
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -156,15 +165,16 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
             next_action: nextAction || null,
         }
 
-        let error
+        let error, newSessionId = sessionId
         if (sessionId) {
             // Editing
             const result = await supabase.from('sessions').update(sessionData).eq('id', sessionId)
             error = result.error
         } else {
             // Creating
-            const result = await supabase.from('sessions').insert(sessionData)
+            const result = await supabase.from('sessions').insert(sessionData).select('id').single()
             error = result.error
+            if (!error && result.data?.id) newSessionId = result.data.id
         }
 
         setSaving(false)
@@ -182,6 +192,30 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
         toast.success(sessionId ? 'Session updated!' : 'Session logged!')
         if (!sessionId) resetForm()
         onSuccess?.()
+
+        // --- AI Debrief Integration ---
+        try {
+            const aiRes = await axios.post('/api/ai/debrief', {
+                sessionId: newSessionId,
+                category,
+                duration: startTime && endTime ? formatDuration(startTime, endTime) : '',
+                what_i_did: whatIDid,
+                was_useful: wasUseful,
+                next_action: nextAction,
+                userId: user.id,
+            })
+            if (aiRes.data?.ai_debrief) {
+                toast((t) => (
+                    <div>
+                        <div className="font-semibold mb-1">AI Insight</div>
+                        <div className="text-sm text-white/90 whitespace-pre-line">{aiRes.data.ai_debrief}</div>
+                        <button onClick={() => toast.dismiss(t.id)} className="mt-2 text-xs text-primary underline">Dismiss</button>
+                    </div>
+                ), { duration: 8000 })
+            }
+        } catch (err) {
+            // Silent fail, do not block UX
+        }
     }
 
     return (
@@ -309,7 +343,29 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
                 <label className={labelClasses}>What I Did Today</label>
                 <textarea
                     value={whatIDid}
-                    onChange={(e) => setWhatIDid(e.target.value)}
+                    onChange={e => {
+                        const value = e.target.value
+                        setWhatIDid(value)
+                        if (debounceRef.current) clearTimeout(debounceRef.current)
+                        debounceRef.current = setTimeout(async () => {
+                            if (!value.trim()) {
+                                setSuggestedNextAction('')
+                                return
+                            }
+                            setSuggesting(true)
+                            try {
+                                const res = await axios.post('/api/ai/suggest-next-action', {
+                                    what_i_did: value,
+                                    category,
+                                    userId: user?.id,
+                                })
+                                setSuggestedNextAction(res.data?.suggestion || '')
+                            } catch {
+                                setSuggestedNextAction('')
+                            }
+                            setSuggesting(false)
+                        }, 700)
+                    }}
                     placeholder="Describe what you accomplished..."
                     required
                     rows={3}
@@ -425,13 +481,24 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
             {/* Next Action */}
             <div>
                 <label className={labelClasses}>Next Action <span className="text-muted/50">(optional)</span></label>
-                <input
-                    type="text"
-                    value={nextAction}
-                    onChange={(e) => setNextAction(e.target.value)}
-                    placeholder="What's the next step?"
-                    className={inputClasses}
-                />
+                <div className="relative">
+                    <input
+                        type="text"
+                        value={nextAction}
+                        onChange={(e) => setNextAction(e.target.value)}
+                        placeholder={suggesting ? 'Thinking...' : (suggestedNextAction || "What's the next step?")}
+                        className={inputClasses + (suggestedNextAction && !nextAction ? ' placeholder-primary/70' : '')}
+                    />
+                    {/* Ghost text overlay for suggestion */}
+                    {suggestedNextAction && !nextAction && !suggesting && (
+                        <div
+                            className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary/70 text-sm select-none"
+                            style={{ zIndex: 1 }}
+                        >
+                            {suggestedNextAction}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Submit */}

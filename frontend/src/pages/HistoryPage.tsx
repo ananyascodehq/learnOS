@@ -169,6 +169,14 @@ function SessionDetail({ session, onEdit, onDelete }: SessionDetailProps) {
                 </div>
             )}
 
+            {/* AI Debrief */}
+            {session.ai_debrief && (
+                <div className="flex items-start gap-2 bg-primary/10 border border-primary/20 rounded-xl px-3 py-2.5">
+                    <span className="font-semibold text-primary mt-0.5">AI Insight</span>
+                    <span className="text-white/90 text-sm whitespace-pre-line">{session.ai_debrief}</span>
+                </div>
+            )}
+
             {/* Action buttons */}
             <div className="flex items-center gap-3 pt-1" onClick={(e) => e.stopPropagation()}>
                 <button
@@ -325,23 +333,34 @@ export default function HistoryPage() {
     const sessions: Session[] = data?.pages.flat() ?? []
 
     // ── Intersection observer for infinite scroll ──────────────────────────
-    const handleObserver = useCallback(
-        (entries: IntersectionObserverEntry[]) => {
-            const [entry] = entries
-            if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-                fetchNextPage()
-            }
-        },
-        [hasNextPage, isFetchingNextPage, fetchNextPage],
-    )
+    // Use refs to hold the latest state for the observer without causing re-renders
+    const observer = useRef<IntersectionObserver>()
+    const isFetchingRef = useRef(isFetchingNextPage)
+    const hasNextPageRef = useRef(hasNextPage)
+    isFetchingRef.current = isFetchingNextPage
+    hasNextPageRef.current = hasNextPage
 
     useEffect(() => {
+        if (observer.current) observer.current.disconnect()
+
         const el = loaderRef.current
         if (!el) return
-        const observer = new IntersectionObserver(handleObserver, { threshold: 0.1 })
-        observer.observe(el)
-        return () => observer.disconnect()
-    }, [handleObserver])
+
+        observer.current = new IntersectionObserver((entries) => {
+            const [entry] = entries
+            if (entry.isIntersecting && hasNextPageRef.current && !isFetchingRef.current) {
+                fetchNextPage()
+            }
+        })
+
+        observer.current.observe(el)
+        
+        return () => {
+            if (observer.current) {
+                observer.current.disconnect()
+            }
+        }
+    }, [loaderRef, fetchNextPage])
 
     // ── Helpers ────────────────────────────────────────────────────────────
     function toggleCategory(cat: CategoryType) {
