@@ -71,7 +71,7 @@ learnos/
 - Fields: What I Did, Status, Start/End Time, Duration (auto), Was it Useful?, Next Action
 - Session continuity detection
 - **AI Next-Action Suggestion**: Ghost text suggestions for the user's next step based on session input.
-- **AI Debrief**: Toast notifications providing an instant analysis of the logged session.
+- **AI Debrief**: Insight card in the post-session modal providing an instant analysis of the logged session.
 
 ### 4.4 Analytics Dashboard
 
@@ -91,6 +91,7 @@ learnos/
 ### 4.6 Session History
 
 - Full log view with filters (category, status, useful, date range, search)
+- **AI Debrief**: Insight card in the expanded session row for historical analysis review.
 
 ### 4.7 NPTEL Tracker
 
@@ -142,14 +143,22 @@ learnos/
 
 ---
 
-## 8. Development Status & Task Index
+## 8. Development Status & Task Summary
 
-See `docs/TASKS.md` for a full sequential breakdown of all implementation phases and tasks, including:
+| Phase | Module | Status | Notes |
+|-------|--------|--------|-------|
+| 0 | Project Scaffolding & DB schema | ✅ Complete | Supabase configured with RLS & Types |
+| 1 | Auth & Routing | ✅ Complete | Google OAuth & Protected Routes active |
+| 2 | Session Logger | ✅ Complete | Includes Pomodoro and AI ghost text & debrief insight cards |
+| 3 | Dashboard | ✅ Complete | Charts, Weekly AI Summary, and heatmaps active |
+| 4 | Session History | ✅ Complete | Filters and AI insight cards implemented |
+| 5 | Next Actions & Deadlines | ✅ Complete | Action marking and countdown active |
+| 6 | NPTEL Tracker | ✅ Complete | Course and week grid implemented |
+| 7 | Friends & Social | ✅ Complete | Realtime feed & leaderboard active |
+| 8 | Profile | ✅ Complete | Settings and Google Auth sync active |
+| 9 | Polish & Refinement | 🟡 In Progress | Dark mode, error boundaries, mobile responsiveness |
 
-- Project scaffolding
-- Supabase schema & types
-- Auth flow
-- Logger, dashboard, history, next actions, NPTEL, friends, profile, polish
+See `docs/TASKS.md` for a full sequential breakdown of all implementation phases and task-level granular details.
 
 ---
 
