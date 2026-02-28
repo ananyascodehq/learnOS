@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react'
-import { Timer, X, Play, Pause } from 'lucide-react'
+import { Timer, X, Play, Pause, Square } from 'lucide-react'
 import { usePomodoro } from '../../contexts/PomodoroContext'
 
 
@@ -23,14 +23,12 @@ function formatTimeOfDay(): string {
 
 
 export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTimerProps) {
-    const { running, duration, remaining, start, stop, setTaskTitle } = usePomodoro();
-    const [localDuration, setLocalDuration] = useState(1500);
-    const [isStarted, setIsStarted] = useState(false);
+    const { running, isStarted, duration, setDuration, remaining, start, pause, stop, setTaskTitle } = usePomodoro();
     const [isComplete, setIsComplete] = useState(false);
     const audioRef = useRef<AudioContext | null>(null);
 
     const totalSeconds = duration;
-    const secondsLeft = running ? remaining : localDuration;
+    const secondsLeft = remaining;
     const progress = isStarted ? 1 - (secondsLeft / totalSeconds) : 0;
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = secondsLeft % 60;
@@ -64,42 +62,47 @@ export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTime
 
 
     useEffect(() => {
-        if (running && remaining === 0) {
+        if (isStarted && remaining === 0 && !isComplete) {
             setIsComplete(true);
             playBeep();
             onEnd(formatTimeOfDay());
         }
-    }, [running, remaining, onEnd, playBeep]);
+    }, [isStarted, remaining, isComplete, onEnd, playBeep]);
 
 
     const handleStart = () => {
         if (!isStarted) {
-            setIsStarted(true);
             setTaskTitle('');
             onStart(formatTimeOfDay());
-            start(localDuration);
-        } else if (!running) {
             start(duration);
+        } else if (!running) {
+            start();
         }
     };
 
 
     const handlePause = () => {
-        stop();
+        pause();
     };
 
 
     const handleCancel = () => {
         stop();
-        setIsStarted(false);
         setIsComplete(false);
         onCancel();
     };
 
 
+    const handleStop = () => {
+        stop();
+        setIsComplete(false);
+        onEnd(formatTimeOfDay());
+    };
+
+
     const handleDurationChange = (secs: number) => {
         if (isStarted) return;
-        setLocalDuration(secs);
+        setDuration(secs);
     };
 
 
@@ -205,6 +208,16 @@ export default function PomodoroTimer({ onStart, onEnd, onCancel }: PomodoroTime
                             >
                                 <Play className="w-4 h-4" />
                                 {isStarted ? 'Resume' : 'Start'}
+                            </button>
+                        )}
+                        {isStarted && (
+                            <button
+                                type="button"
+                                onClick={handleStop}
+                                title="Stop Timer"
+                                className="flex items-center justify-center w-10 h-10 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-colors cursor-pointer"
+                            >
+                                <Square className="w-4 h-4 fill-current" />
                             </button>
                         )}
                     </div>

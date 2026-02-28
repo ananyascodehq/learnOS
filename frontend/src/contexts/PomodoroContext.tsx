@@ -2,21 +2,26 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 
 interface PomodoroState {
   running: boolean;
+  isStarted: boolean;
   startTime: number | null;
   duration: number; // in seconds
   remaining: number; // in seconds
   taskTitle: string;
   setTaskTitle: (title: string) => void;
-  start: (duration: number) => void;
+  setDuration: (duration: number) => void;
+  setIsStarted: (isStarted: boolean) => void;
+  start: (duration?: number) => void;
+  pause: () => void;
   stop: () => void;
   tick: () => void;
 }
+
 
 const PomodoroContext = createContext<PomodoroState | undefined>(undefined);
 
 const STORAGE_KEY = 'pomodoro-timer-state-v1';
 
-function getInitialState(): Omit<PomodoroState, 'setTaskTitle' | 'start' | 'stop' | 'tick'> {
+function getInitialState(): Omit<PomodoroState, 'setTaskTitle' | 'setDuration' | 'setIsStarted' | 'start' | 'pause' | 'stop' | 'tick'> {
   if (typeof window !== 'undefined') {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
@@ -24,6 +29,7 @@ function getInitialState(): Omit<PomodoroState, 'setTaskTitle' | 'start' | 'stop
         const parsed = JSON.parse(raw);
         return {
           running: parsed.running,
+          isStarted: parsed.isStarted || false,
           startTime: parsed.startTime,
           duration: parsed.duration,
           remaining: parsed.remaining,
@@ -32,12 +38,13 @@ function getInitialState(): Omit<PomodoroState, 'setTaskTitle' | 'start' | 'stop
       } catch { }
     }
   }
-  return { running: false, startTime: null, duration: 1500, remaining: 1500, taskTitle: '' };
+  return { running: false, isStarted: false, startTime: null, duration: 1500, remaining: 1500, taskTitle: '' };
 }
 
 export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const init = getInitialState()
   const [running, setRunning] = useState(init.running);
+  const [isStarted, setIsStarted] = useState(init.isStarted);
   const [startTime, setStartTime] = useState<number | null>(init.startTime);
   const [duration, setDuration] = useState(init.duration);
   const [remaining, setRemaining] = useState(init.remaining);
@@ -47,9 +54,9 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ running, startTime, duration, remaining, taskTitle })
+      JSON.stringify({ running, isStarted, startTime, duration, remaining, taskTitle })
     );
-  }, [running, startTime, duration, remaining, taskTitle]);
+  }, [running, isStarted, startTime, duration, remaining, taskTitle]);
 
   // Timer tick
   useEffect(() => {
@@ -68,20 +75,31 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [running]);
 
   // Start timer
-  const start = useCallback((dur: number) => {
-    setDuration(dur);
-    setRemaining(dur);
+  const start = useCallback((dur?: number) => {
+    if (dur !== undefined) {
+      setDuration(dur);
+      setRemaining(dur);
+    }
     setStartTime(Date.now());
     setRunning(true);
+    setIsStarted(true);
+  }, []);
+
+  // Pause timer
+  const pause = useCallback(() => {
+    setRunning(false);
+    setStartTime(null);
   }, []);
 
   // Stop timer
   const stop = useCallback(() => {
     setRunning(false);
+    setIsStarted(false);
     setStartTime(null);
-    setRemaining(duration);
+    setDuration(1500);
+    setRemaining(1500);
     setTaskTitle('');
-  }, [duration]);
+  }, []);
 
   // Manual tick (not used, but for API completeness)
   const tick = useCallback(() => {
@@ -89,7 +107,7 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   return (
-    <PomodoroContext.Provider value={{ running, startTime, duration, remaining, taskTitle, setTaskTitle, start, stop, tick }}>
+    <PomodoroContext.Provider value={{ running, isStarted, startTime, duration, remaining, taskTitle, setTaskTitle, setDuration, setIsStarted, start, pause, stop, tick }}>
       {children}
     </PomodoroContext.Provider>
   );

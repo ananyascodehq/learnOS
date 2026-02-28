@@ -20,7 +20,6 @@ A cloud-based study tracking and analytics platform that transforms raw learning
 | Frontend | React 18 + Vite, TypeScript, Tailwind CSS, Recharts, React Query |
 | Backend | Node.js + Express (TypeScript) |
 | Database & Auth | Supabase (PostgreSQL + Google OAuth + Realtime) |
-| AI | Anthropic Claude API |
 
 ## 📁 Project Structure
 
@@ -64,7 +63,7 @@ The frontend dev server will start at `http://localhost:5173`.
 ```bash
 cd backend
 cp .env.example .env
-# Fill in your Supabase URL, service key, Anthropic API key, frontend URL, and port in .env
+# Fill in your Supabase URL, service key, frontend URL, and port in .env
 npm install
 npm run dev
 ```
@@ -87,6 +86,5 @@ The backend server will start at `http://localhost:3001`.
 |----------|-------------|
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_SERVICE_KEY` | Your Supabase service role key |
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
 | `FRONTEND_URL` | Frontend origin for CORS (e.g. `http://localhost:5173`) |
 | `PORT` | Server port (default: `3001`) |

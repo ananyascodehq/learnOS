@@ -1,17 +1,32 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
     UserCircle, Mail, GraduationCap, BookOpen,
-    Calendar, LogOut, Building2
+    Calendar, LogOut, Building2, AlertTriangle, Trash2
 } from 'lucide-react'
 
 export default function ProfilePage() {
-    const { user, profile, signOut } = useAuth()
+    const { user, profile, signOut, deleteAllData } = useAuth()
     const navigate = useNavigate()
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const handleSignOut = async () => {
         await signOut()
         navigate('/login', { replace: true })
+    }
+
+    const handleDeleteData = async () => {
+        try {
+            setIsDeleting(true)
+            await deleteAllData()
+            // Router will redirect to login given auth state changes
+        } catch (error) {
+            console.error('Error deleting data:', error)
+            setIsDeleting(false)
+            setShowDeleteConfirm(false)
+        }
     }
 
     const avatarUrl = profile?.avatar_url ?? user?.user_metadata?.avatar_url
@@ -72,16 +87,62 @@ export default function ProfilePage() {
                 )}
             </div>
 
-            {/* Sign out */}
-            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
+            {/* Sign out & Delete */}
+            <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
                 <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-xl transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-xl transition-colors cursor-pointer"
                 >
                     <LogOut className="w-4 h-4" />
                     Sign Out
                 </button>
+
+                {!showDeleteConfirm ? (
+                    <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-xl transition-colors cursor-pointer"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                        Delete All Data
+                    </button>
+                ) : (
+                    <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 space-y-3">
+                        <div className="flex gap-3">
+                            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
+                            <div className="text-sm">
+                                <p className="text-red-400 font-medium">Are you absolutely sure?</p>
+                                <p className="text-red-400/80 mt-1">
+                                    This action cannot be undone. This will permanently delete your account
+                                    and remove your data from our servers.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteData}
+                                disabled={isDeleting}
+                                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {isDeleting ? (
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    'Yes, delete my account'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )
