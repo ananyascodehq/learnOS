@@ -9,6 +9,7 @@ interface AuthContextType {
     loading: boolean
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
+    deleteAllData: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -91,12 +92,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
+    const deleteAllData = async () => {
+        if (!user) return;
+
+        try {
+            // Delete all user data explicitly from tables we have access to
+            // Assuming RLS allows deleting own data.
+            await Promise.all([
+                supabase.from('sessions').delete().eq('user_id', user.id),
+                supabase.from('nptel_courses').delete().eq('user_id', user.id),
+                supabase.from('friendships').delete().or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
+                supabase.from('users').delete().eq('id', user.id),
+            ]);
+
+            // Sign out after deletion
+            await signOut();
+        } catch (error) {
+            console.error('Error deleting data:', error);
+            throw error;
+        }
+    }
+
     const value: AuthContextType = {
         user,
         profile,
         loading,
         signInWithGoogle,
         signOut,
+        deleteAllData
     }
 
     return (
