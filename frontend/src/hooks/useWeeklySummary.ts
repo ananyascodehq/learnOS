@@ -6,9 +6,9 @@ export function useWeeklySummary() {
   const { user } = useAuth()
   return useQuery({
     queryKey: ['weekly_summary', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ summary: string, week_start: string, user_id: string } | null> => {
       if (!user) return null
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('weekly_summaries')
         .select('*')
         .eq('user_id', user.id)
@@ -16,7 +16,7 @@ export function useWeeklySummary() {
         .limit(1)
         .single()
       if (error && error.code !== 'PGRST116') throw error // ignore no rows
-      return data
+      return data as any
     },
     enabled: !!user,
   })
