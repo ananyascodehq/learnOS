@@ -1,0 +1,213 @@
+# PROJECT_STATUS.md
+
+# LearnOS — Technical Review & Feature Documentation
+
+_Last updated: February 28, 2026_
+
+---
+
+## 1. Executive Summary
+
+LearnOS is a cloud-based personal study intelligence platform for students. It replaces manual spreadsheet workflows with a real-time session logger, analytics dashboard, collaborative friend feed, and progress insights, all accessible via secure Google OAuth login.
+
+---
+
+## 2. Architecture Overview
+
+**Frontend:** React 18 + Vite, TypeScript, Tailwind CSS, Recharts, React Query  
+**Backend:** Node.js + Express (TypeScript)  
+**Database & Auth:** Supabase (PostgreSQL, Google OAuth, Realtime)
+
+- **Frontend Hosting:** Vercel
+- **Backend Hosting:** Render/Railway
+
+### Key Principles
+
+- All sensitive operations are backend-only (API keys never exposed to frontend)
+- Supabase Row Level Security (RLS) on all tables
+- All timestamps in UTC (frontend converts to local)
+- React Query for caching, background refresh, optimistic updates
+
+---
+
+## 3. Project Structure
+
+```
+learnos/
+├── frontend/   # React + Vite + Tailwind
+│   ├── src/
+│   ├── public/
+│   ├── .env.example
+│   └── package.json
+├── backend/    # Node.js + Express
+│   ├── src/
+│   ├── .env.example
+│   └── package.json
+├── docs/       # PRD and task docs
+└── README.md
+```
+
+---
+
+## 4. Feature Overview
+
+### 4.1 Authentication & Account System
+
+- Google OAuth via Supabase Auth (no email/password)
+- On first login, user completes Profile Setup (Full Name, College, Year, Semester)
+- JWT session tokens managed by Supabase SDK
+- Protected routes: unauthenticated users redirected to login
+- Logout clears session
+
+### 4.2 Profile Page
+
+- Fields: Full Name, Email (read-only), College, Year, Semester
+- Semester start/end dates for progress tracking
+
+### 4.3 Session Logger
+
+- Integrated Pomodoro timer
+- Categorize sessions (DSA, Projects, etc.)
+- Fields: What I Did, Status, Start/End Time, Duration (auto), Was it Useful?, Next Action
+- Session continuity detection
+
+### 4.4 Analytics Dashboard
+
+- Weekly heatmap (days x hours)
+- Category chart (minutes per category)
+- Useful/Not Useful donut chart
+- Streak counter & at-risk banner
+- Semester progress bar
+- Quick stats (total hours, sessions, most active category)
+
+### 4.5 Next Actions & Deadlines
+
+- Panel for all entries with pending next actions
+- Task name, next action, date logged, source category
+
+### 4.6 Session History
+
+- Full log view with filters (category, status, useful, date range, search)
+
+### 4.7 NPTEL Tracker
+
+- Track course progress week-by-week
+- Completion heatmap
+
+### 4.8 Friends & Social
+
+- Friend search, request, accept/reject
+- Activity feed (Supabase Realtime)
+- Group analytics, leaderboard
+- Hide-from-friends toggle for privacy
+
+### 4.9 UI/UX
+
+- Dark mode (system-aware)
+- Mobile responsive
+- Minimal chrome, data-centric UI
+- Loading skeletons, error boundaries, toast notifications
+
+---
+
+## 5. Backend API Endpoints
+
+- `GET /api/health` — Health check
+- All other CRUD via Supabase client SDK (frontend)
+
+---
+
+## 6. Security & Compliance
+
+- Google OAuth only (no passwords)
+- RLS on all Supabase tables
+- API keys in server env only
+- Data privacy: no data sold/shared, hosted on AWS (India region)
+- WCAG 2.1 AA accessibility for core flows
+
+---
+
+## 7. Non-Functional Requirements
+
+- Dashboard loads <2s, logger submits <1s
+- 99.9% uptime (Supabase SLA)
+- Optimistic UI, retry on network failure
+- Scalable to 50+ users (Supabase free tier)
+
+---
+
+## 8. Development Status & Task Index
+
+See `docs/TASKS.md` for a full sequential breakdown of all implementation phases and tasks, including:
+
+- Project scaffolding
+- Supabase schema & types
+- Auth flow
+- Logger, dashboard, history, next actions, NPTEL, friends, profile, polish
+
+---
+
+## 9. Environment Variables
+
+### Frontend (`frontend/.env`)
+
+| Variable                 | Description          |
+| ------------------------ | -------------------- |
+| `VITE_SUPABASE_URL`      | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase public key  |
+| `VITE_BACKEND_URL`       | Express backend URL  |
+
+### Backend (`backend/.env`)
+
+| Variable               | Description               |
+| ---------------------- | ------------------------- |
+| `SUPABASE_URL`         | Supabase project URL      |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key |
+| `FRONTEND_URL`         | Frontend origin for CORS  |
+| `PORT`                 | Server port               |
+
+---
+
+## 10. Data Model (Supabase)
+
+- Users, Sessions, Friendships, NPTEL Courses/Weeks
+- RLS policies for all tables
+- See `migrations/` for schema SQL
+
+---
+
+## 11. Key Files & Modules
+
+### Frontend
+
+- `src/contexts/AuthContext.tsx` — Auth state, Google login, profile
+- `src/contexts/PomodoroContext.tsx` — Pomodoro timer state
+- `src/components/auth/ProtectedRoute.tsx` — Route protection
+- `src/components/layout/AppShell.tsx` — Persistent navigation shell
+- `src/components/logger/PomodoroTimer.tsx` — Timer UI
+- `src/pages/` — All main pages (Dashboard, History, Friends, etc.)
+- `src/lib/supabase.ts` — Typed Supabase client
+- `src/types/` — Shared types (database, filters, UI)
+
+### Backend
+
+- `src/index.ts` — Express app entrypoint
+
+---
+
+## 12. Outstanding Risks & Backlog
+
+- See PRD and `docs/TASKS.md` for known risks, mitigations, and Phase 2 backlog
+
+---
+
+## 13. References
+
+- [README.md](../README.md)
+- [docs/TASKS.md](TASKS.md)
+- [doc_dump.txt](../doc_dump.txt)
+- [migrations/](../migrations/)
+
+---
+
+_This document is auto-generated from code and documentation review. For implementation details, see the referenced files._
