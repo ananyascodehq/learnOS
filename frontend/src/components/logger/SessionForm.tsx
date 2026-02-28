@@ -6,6 +6,7 @@ import type { CategoryType, SessionStatus, CollegeWorkType, Session } from '../.
 import { RotateCcw, X, Timer } from 'lucide-react'
 import toast from 'react-hot-toast'
 import PomodoroTimer from './PomodoroTimer'
+import { useQueryClient } from '@tanstack/react-query'
 
 const COLLEGE_WORK_TYPES: { label: string; value: CollegeWorkType }[] = [
     { label: 'Record', value: 'Record' },
@@ -56,6 +57,7 @@ interface SessionFormProps {
 
 export default function SessionForm({ initialData, sessionId, onSuccess }: SessionFormProps) {
     const { user } = useAuth()
+    const queryClient = useQueryClient()
 
     const [date, setDate] = useState(initialData?.date ?? getTodayString())
     const [category, setCategory] = useState<CategoryType | ''>(initialData?.category ?? '')
@@ -73,14 +75,14 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
     const [showResumeBanner, setShowResumeBanner] = useState(false)
     const [showTimer, setShowTimer] = useState(false)
 
-    // Session continuity: check for matching task from today
+    // Session continuity: check for matching task from the selected date
     const checkForResumable = useCallback(async () => {
         if (!user || !title.trim() || sessionId) return
         const { data } = await supabase
             .from('sessions')
             .select('*')
             .eq('user_id', user.id)
-            .eq('date', getTodayString())
+            .eq('date', date)
             .ilike('title', title.trim())
             .order('created_at', { ascending: false })
             .limit(1)
@@ -92,7 +94,7 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
             setMatchedSession(null)
             setShowResumeBanner(false)
         }
-    }, [user, title, sessionId])
+    }, [user, title, sessionId, date])
 
     const handleResume = () => {
         if (!matchedSession) return
@@ -173,6 +175,10 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
             return
         }
 
+        // Invalidate queries to refresh dashboard and history
+        queryClient.invalidateQueries({ queryKey: ['sessions'] })
+        queryClient.invalidateQueries({ queryKey: ['streak'] })
+
         toast.success(sessionId ? 'Session updated!' : 'Session logged!')
         if (!sessionId) resetForm()
         onSuccess?.()
@@ -186,7 +192,7 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
                     <div className="flex items-center gap-2 text-sm">
                         <RotateCcw className="w-4 h-4 text-learning shrink-0" />
                         <span className="text-white/80">
-                            You worked on <strong className="text-white">{matchedSession.title}</strong> earlier today
+                            You worked on <strong className="text-white">{matchedSession.title}</strong> previously
                         </span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">

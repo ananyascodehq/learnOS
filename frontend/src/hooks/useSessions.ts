@@ -10,11 +10,11 @@ type SessionUpdate = Database['public']['Tables']['sessions']['Update']
 
 const PAGE_SIZE = 20
 
-function getTodayString(): string {
+export function getTodayString(): string {
     return new Date().toISOString().split('T')[0]
 }
 
-function getWeekStart(): string {
+export function getWeekStart(): string {
     const now = new Date()
     const day = now.getDay()
     const diff = now.getDate() - day + (day === 0 ? -6 : 1) // Monday
@@ -28,68 +28,34 @@ function getMonthStart(): string {
     return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
 }
 
-export function useSessionsToday(): UseQueryResult<Session[]> {
+export function useDashboardSessions(): UseQueryResult<{ today: Session[], week: Session[], month: Session[] }> {
     const { user } = useAuth()
     const today = getTodayString()
+    const weekStart = getWeekStart()
+    const monthStart = getMonthStart()
+
+    // We want the minimum of weekStart and monthStart to fetch all needed sessions in one go
+    const fromDate = weekStart < monthStart ? weekStart : monthStart
 
     return useQuery({
-        queryKey: ['sessions', 'today', user?.id, today],
+        queryKey: ['sessions', 'dashboard', user?.id, fromDate, today],
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('sessions')
                 .select('*')
                 .eq('user_id', user!.id)
-                .eq('date', today)
+                .gte('date', fromDate)
+                .lte('date', today)
+                .order('date', { ascending: false })
                 .order('created_at', { ascending: false })
 
             if (error) throw error
-            return data
-        },
-        enabled: !!user,
-    })
-}
 
-export function useSessionsThisWeek(): UseQueryResult<Session[]> {
-    const { user } = useAuth()
-    const weekStart = getWeekStart()
-    const today = getTodayString()
+            const todaySessions = data.filter(s => s.date === today)
+            const weekSessions = data.filter(s => s.date >= weekStart && s.date <= today)
+            const monthSessions = data.filter(s => s.date >= monthStart && s.date <= today)
 
-    return useQuery({
-        queryKey: ['sessions', 'week', user?.id, weekStart],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('sessions')
-                .select('*')
-                .eq('user_id', user!.id)
-                .gte('date', weekStart)
-                .lte('date', today)
-                .order('date', { ascending: false })
-
-            if (error) throw error
-            return data
-        },
-        enabled: !!user,
-    })
-}
-
-export function useSessionsThisMonth(): UseQueryResult<Session[]> {
-    const { user } = useAuth()
-    const monthStart = getMonthStart()
-    const today = getTodayString()
-
-    return useQuery({
-        queryKey: ['sessions', 'month', user?.id, monthStart],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('sessions')
-                .select('*')
-                .eq('user_id', user!.id)
-                .gte('date', monthStart)
-                .lte('date', today)
-                .order('date', { ascending: false })
-
-            if (error) throw error
-            return data
+            return { today: todaySessions, week: weekSessions, month: monthSessions }
         },
         enabled: !!user,
     })

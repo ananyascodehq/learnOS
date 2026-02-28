@@ -1,4 +1,4 @@
-import { useSessionsToday, useSessionsThisWeek, useSessionsThisMonth, useStreak } from '../hooks/useSessions'
+import { useDashboardSessions, useStreak } from '../hooks/useSessions'
 import { getCategoryColor } from '../constants/categories'
 import { Clock, Layers, Flame, BookOpen, CheckCircle, XCircle } from 'lucide-react'
 import WeeklyHeatmap from '../components/dashboard/WeeklyHeatmap'
@@ -8,10 +8,12 @@ import SemesterProgress from '../components/dashboard/SemesterProgress'
 import StreakAtRiskBanner from '../components/dashboard/StreakAtRiskBanner'
 
 export default function DashboardPage() {
-    const { data: todaySessions = [], isLoading } = useSessionsToday()
-    const { data: weekSessions = [] } = useSessionsThisWeek()
-    const { data: monthSessions = [] } = useSessionsThisMonth()
+    const { data: dashboardSessions, isLoading } = useDashboardSessions()
     const { data: streak = 0 } = useStreak()
+
+    const todaySessions = dashboardSessions?.today ?? []
+    const weekSessions = dashboardSessions?.week ?? []
+    const monthSessions = dashboardSessions?.month ?? []
 
     const totalMinutes = todaySessions.reduce((sum, s) => sum + (s.duration_minutes ?? 0), 0)
     const hours = Math.floor(totalMinutes / 60)

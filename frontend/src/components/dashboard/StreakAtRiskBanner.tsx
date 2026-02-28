@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Flame, X } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useSessionsToday } from '../../hooks/useSessions'
+import { useDashboardSessions } from '../../hooks/useSessions'
 
 export default function StreakAtRiskBanner() {
     const [dismissed, setDismissed] = useState(false)
     const [isAfter9PM, setIsAfter9PM] = useState(false)
 
     const { user } = useAuth()
-    const { data: todaySessions = [], isLoading } = useSessionsToday()
+    const { data: dashboardData, isLoading } = useDashboardSessions()
+    const todaySessions = dashboardData?.today ?? []
 
     useEffect(() => {
         // Check if current time is after 21:00
