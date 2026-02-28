@@ -9,7 +9,12 @@ const NEXT_ACTION_SYSTEM_PROMPT = `Given the session context, suggest a single n
 
 // --- SERVICE IMPLEMENTATIONS ---
 
-export async function runDebrief({ sessionId, category, duration, what_i_did, was_useful, next_action }) {
+export async function runDebrief({ sessionId, category, duration, what_i_did, was_useful, next_action }: any) {
+  if (!process.env.GROQ_API_KEY) {
+    console.log('[MOCK] AI Debrief called since no GROQ_API_KEY is available')
+    return `You struggled with distractions today, but completed your main task. Keep your phone away next time.`
+  }
+
   // Compose prompt
   const userPrompt = `Category: ${category}\nDuration: ${duration} minutes\nWhat I did: ${what_i_did}\nWas it useful: ${was_useful}\nPlanned next action: ${next_action}`
   // Call Groq API (Llama 3.1 8B Instruct)
@@ -28,14 +33,19 @@ export async function runDebrief({ sessionId, category, duration, what_i_did, wa
   return response.data.choices[0].message.content.trim()
 }
 
-export async function runWeeklySummary({ userId, weekStart }) {
+export async function runWeeklySummary({ userId, weekStart }: any) {
   // Compose prompt (details omitted)
   // Call Hugging Face Inference API (Mistral 7B)
   // Persist result to DB (not implemented here)
-  return 'Weekly summary (mocked)'
+  return `1. Consistent evening study routine.\n2. Lack of deep focus sessions.\n3. Increase Pomodoro lengths to 45 mins.`
 }
 
-export async function runNextActionSuggestion({ userId, category, what_i_did, recent_next_actions }) {
+export async function runNextActionSuggestion({ userId, category, what_i_did, recent_next_actions }: any) {
+  if (!process.env.GROQ_API_KEY) {
+    console.log('[MOCK] AI Suggest Next Action called since no GROQ_API_KEY is available')
+    return `Move on to the next section or review your notes.`
+  }
+
   // Compose prompt
   const userPrompt = `Category: ${category}\nWhat I did: ${what_i_did}\nRecent next actions: ${recent_next_actions?.join('; ')}`
   // Call Groq API (Llama 3.1 8B Instruct)

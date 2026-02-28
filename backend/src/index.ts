@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import { config } from 'dotenv'
-import streakRoutes from './routes/streakRoutes'
+// import streakRoutes from './routes/streakRoutes'
 import aiRoutes from './routes/aiRoutes'
 import rateLimit from 'express-rate-limit'
 import morgan from 'morgan'
@@ -12,14 +12,16 @@ import path from 'path'
 config()
 
 const app = express()
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 3001
 
 // Middleware
 app.use(cors())
 app.use(express.json())
 
 // Logging
-const logStream = fs.createWriteStream(path.join(__dirname, '../../logs/ai.log'), { flags: 'a' })
+const logDir = path.join(__dirname, '../../logs')
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true })
+const logStream = fs.createWriteStream(path.join(logDir, 'ai.log'), { flags: 'a' })
 app.use(morgan('combined', { stream: logStream }))
 
 // Routes
@@ -31,10 +33,13 @@ app.get('/', (req, res) => {
 const aiLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
   max: 50,
-  keyGenerator: (req) => req.body.userId || req.ip,
+  keyGenerator: (req: any) => req.body.userId || req.ip,
   message: 'Daily AI usage limit reached. Try again tomorrow.',
 })
 app.use('/api/ai', aiLimiter)
+app.use('/api/ai', aiRoutes)
+// app.use('/api/streaks', streakRoutes)
+
 
 // Start server
 app.listen(port, () => {

@@ -3,7 +3,7 @@ import path from 'path'
 
 const logPath = path.join(__dirname, '../../logs/ai_events.log')
 
-export function logAiCall({ userId, feature, latency_ms, success }) {
+export function logAiCall({ userId, feature, latency_ms, success }: any) {
   const line = JSON.stringify({
     ts: new Date().toISOString(),
     user: userId,
