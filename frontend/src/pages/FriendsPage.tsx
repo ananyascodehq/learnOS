@@ -176,7 +176,7 @@ function FriendsTab() {
         const { data } = await supabase
             .from('users')
             .select('*')
-            .eq('email', searchEmail.trim().toLowerCase())
+            .ilike('email', searchEmail.trim())
             .neq('id', user!.id)
             .limit(1)
         setSearching(false)
