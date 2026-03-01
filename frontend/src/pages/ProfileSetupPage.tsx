@@ -6,7 +6,7 @@ import { BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ProfileSetupPage() {
-    const { user, profile } = useAuth()
+    const { user, profile, refreshProfile } = useAuth()
     const navigate = useNavigate()
 
     const [fullName, setFullName] = useState(profile?.full_name ?? user?.user_metadata?.full_name ?? '')
@@ -51,6 +51,7 @@ export default function ProfileSetupPage() {
             return
         }
 
+        await refreshProfile()
         toast.success('Profile saved!')
         navigate('/', { replace: true })
     }

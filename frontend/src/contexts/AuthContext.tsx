@@ -9,6 +9,7 @@ interface AuthContextType {
     loading: boolean
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
+    refreshProfile: () => Promise<void>
     deleteAllData: () => Promise<void>
 }
 
@@ -35,17 +36,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [])
 
     useEffect(() => {
-        // Get initial session
         const getInitialSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession()
 
-            if (session?.user) {
-                setUser(session.user)
-                const userProfile = await fetchProfile(session.user.id)
-                setProfile(userProfile)
+                if (error) {
+                    console.error("Error getting session:", error)
+                }
+
+                if (session?.user) {
+                    setUser(session.user)
+                    try {
+                        const userProfile = await fetchProfile(session.user.id)
+                        setProfile(userProfile)
+                    } catch (err) {
+                        console.error("Error heavily fetching profile:", err)
+                    }
+                }
+            } catch (globalError) {
+                console.error("Global auth error", globalError)
+            } finally {
+                setLoading(false)
             }
-
-            setLoading(false)
         }
 
         getInitialSession()
@@ -97,6 +109,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
+    const refreshProfile = useCallback(async () => {
+        if (!user) return
+        const userProfile = await fetchProfile(user.id)
+        setProfile(userProfile)
+    }, [user, fetchProfile])
+
     const deleteAllData = useCallback(async () => {
         if (!user) return;
 
@@ -120,8 +138,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         signInWithGoogle,
         signOut,
+        refreshProfile,
         deleteAllData
-    }), [user, profile, loading, signInWithGoogle, signOut, deleteAllData])
+    }), [user, profile, loading, signInWithGoogle, signOut, refreshProfile, deleteAllData])
 
     return (
         <AuthContext.Provider value={value}>
