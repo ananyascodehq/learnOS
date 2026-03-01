@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Search, Filter, ChevronDown, ChevronUp, CheckCircle, XCircle,
@@ -170,10 +170,10 @@ function SessionDetail({ session, onEdit, onDelete }: SessionDetailProps) {
             )}
 
             {/* AI Debrief */}
-            {session.ai_debrief && (
+            {(session as any).ai_debrief && (
                 <div className="flex items-start gap-2 bg-primary/10 border border-primary/20 rounded-xl px-3 py-2.5">
                     <span className="font-semibold text-primary mt-0.5">AI Insight</span>
-                    <span className="text-white/90 text-sm whitespace-pre-line">{session.ai_debrief}</span>
+                    <span className="text-white/90 text-sm whitespace-pre-line">{(session as any).ai_debrief}</span>
                 </div>
             )}
 
@@ -334,7 +334,7 @@ export default function HistoryPage() {
 
     // ── Intersection observer for infinite scroll ──────────────────────────
     // Use refs to hold the latest state for the observer without causing re-renders
-    const observer = useRef<IntersectionObserver>()
+    const observer = useRef<IntersectionObserver | null>(null)
     const isFetchingRef = useRef(isFetchingNextPage)
     const hasNextPageRef = useRef(hasNextPage)
     isFetchingRef.current = isFetchingNextPage
@@ -354,7 +354,7 @@ export default function HistoryPage() {
         })
 
         observer.current.observe(el)
-        
+
         return () => {
             if (observer.current) {
                 observer.current.disconnect()

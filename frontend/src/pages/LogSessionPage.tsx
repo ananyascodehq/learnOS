@@ -12,7 +12,7 @@ function toInitialData(s: Session) {
     return {
         date: s.date,
         category: s.category as CategoryType,
-        collegeWorkType: (s.college_work_type ?? '') as CollegeWorkType | '',
+        collegeWorkType: (s.college_work_type ?? null) as CollegeWorkType | null,
         dueDate: s.due_date ?? '',
         title: s.title,
         whatIDid: s.what_i_did,

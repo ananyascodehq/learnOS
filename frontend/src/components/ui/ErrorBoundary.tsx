@@ -22,7 +22,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // You can log errorInfo to an error reporting service here
-    // console.error(error, errorInfo);
+    console.error(error, errorInfo);
   }
 
   render() {
