@@ -14,8 +14,8 @@ export function useWeeklySummary() {
         .eq('user_id', user.id)
         .order('week_start', { ascending: false })
         .limit(1)
-        .single()
-      if (error && error.code !== 'PGRST116') throw error // ignore no rows
+        .maybeSingle()
+      if (error) throw error
       return data as any
     },
     enabled: !!user,

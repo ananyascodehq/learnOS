@@ -3,7 +3,8 @@ import cors from 'cors'
 import { config } from 'dotenv'
 // import streakRoutes from './routes/streakRoutes'
 import aiRoutes from './routes/aiRoutes'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
+import type { Request } from 'express'
 import morgan from 'morgan'
 import fs from 'fs'
 import path from 'path'
@@ -33,7 +34,13 @@ app.get('/', (req, res) => {
 const aiLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
   max: 50,
-  keyGenerator: (req: any) => req.body?.userId || req.ip || 'anonymous',
+  keyGenerator: (req: Request & { user?: { id?: string } }) => {
+    // Prefer authenticated user ID when available for stable per-user limits.
+    if (req.user?.id) return `user:${req.user.id}`
+
+    // ipKeyGenerator normalizes IPv6/IPv4 addresses to avoid ERR_ERL_KEY_GEN_IPV6.
+    return ipKeyGenerator(req.ip ?? req.socket.remoteAddress ?? '0.0.0.0')
+  },
   message: 'Daily AI usage limit reached. Try again tomorrow.',
 })
 app.use('/api/ai', aiLimiter)
