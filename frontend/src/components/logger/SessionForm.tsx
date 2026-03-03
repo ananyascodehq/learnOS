@@ -149,40 +149,47 @@ export default function SessionForm({ initialData, sessionId, onSuccess }: Sessi
         }
 
         setSaving(true)
+        let newSessionId = sessionId
 
-        const sessionData = {
-            user_id: user.id,
-            date,
-            category: category as CategoryType,
-            college_work_type: isCollegeWork && collegeWorkType ? (collegeWorkType as CollegeWorkType) : null,
-            due_date: isCollegeWork && collegeWorkType && dueDate ? dueDate : null,
-            title,
-            what_i_did: whatIDid,
-            status,
-            start_time: startTime,
-            end_time: endTime,
-            was_useful: wasUseful,
-            next_action: nextAction || null,
-        }
+        try {
+            const sessionData = {
+                user_id: user.id,
+                date,
+                category: category as CategoryType,
+                college_work_type: isCollegeWork && collegeWorkType ? (collegeWorkType as CollegeWorkType) : null,
+                due_date: isCollegeWork && collegeWorkType && dueDate ? dueDate : null,
+                title,
+                what_i_did: whatIDid,
+                status,
+                start_time: startTime,
+                end_time: endTime,
+                was_useful: wasUseful,
+                next_action: nextAction || null,
+            }
 
-        let error, newSessionId = sessionId
-        if (sessionId) {
-            // Editing
-            const result = await supabase.from('sessions').update(sessionData).eq('id', sessionId)
-            error = result.error
-        } else {
-            // Creating
-            const result = await supabase.from('sessions').insert(sessionData).select('id').single()
-            error = result.error
-            if (!error && result.data?.id) newSessionId = result.data.id
-        }
+            let error
+            if (sessionId) {
+                // Editing
+                const result = await supabase.from('sessions').update(sessionData).eq('id', sessionId)
+                error = result.error
+            } else {
+                // Creating
+                const result = await supabase.from('sessions').insert(sessionData).select('id').single()
+                error = result.error
+                if (!error && result.data?.id) newSessionId = result.data.id
+            }
 
-        setSaving(false)
-
-        if (error) {
+            if (error) {
+                toast.error('Failed to save session')
+                console.error('Session save error:', error)
+                return
+            }
+        } catch (err) {
             toast.error('Failed to save session')
-            console.error('Session save error:', error)
+            console.error('Session save exception:', err)
             return
+        } finally {
+            setSaving(false)
         }
 
         // Invalidate queries to refresh dashboard and history
