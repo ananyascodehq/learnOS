@@ -3,7 +3,7 @@ import { config } from 'dotenv'
 
 config()
 
-const supabaseUrl = process.env.SUPABASE_URL
+const supabaseUrl = process.env.SUPABASE_URL || 'https://learnos.jiobase.com'
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
 
 if (!supabaseUrl || !supabaseServiceKey) {
